@@ -1,9 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<PackageId>Dynmon</PackageId>
+	<Version>1.0.2</Version>
+	<Authors>Olgunbey Şahin</Authors>
+	<Description>Dynamic preparation of MongoDb queries in C#.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/olgunbey/Dynmon</RepositoryUrl>
+	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  
+
+
   </PropertyGroup>
 
   <ItemGroup>
