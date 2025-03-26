@@ -34,10 +34,13 @@ Specifies the fields in the main table to be returned.
 ### Data
 Additional data to be used for the query. This data can be used to specify the conditions of the query.
 
-## Example Usage
+# Examples Usage
+
+## General Usage
 
 ```csharp
-var queryResponse=await mongoDynamic.ExecuteQueryAsync(filters: null,
+QueryExecuter queryExecuter = new();
+var response=await queryExecuter.ExecuteQueryAsync(filters: null,
     lookups: new List<Lookup>()
     {
         new Lookup()
@@ -63,3 +66,66 @@ var queryResponse=await mongoDynamic.ExecuteQueryAsync(filters: null,
     },
     selectedFields: new List<string> { "_id" },
     data: data);
+```
+## Using PreserveNullAndEmptyArrays
+```csharp
+QueryExecuter queryExecuter = new();
+JsonNode? response = await queryExecuter.ExecuteQueryAsync(filters: null,
+    lookups: new List<Lookup>()
+    {
+        new Lookup()
+        {
+            From="SymptomCategory",
+            As="SymptomCategory",
+            ForeignKey="_id",
+            LocalField="SymptomCategoryId",
+            RelationType=Enums.RelationTypes.One,
+            Selects= new List<string>{"Name","IsDeleted"},
+            PreserveNullAndEmptyArrays=false,
+            Filters = new List<Filter>()
+            {
+                new Filter()
+                {
+                    Field="IsDeleted",
+                    MatchOperator=Enums.MatchOperators.None,
+                    FilterOperator=Enums.FilterOperators.Equals,
+                    Value=false
+                }
+            }
+        }
+    },
+    selectedFields: new List<string> { "_id", "Name" }, getAllCollections);
+```
+- If PreserveNullAndEmptyArrays is false, the SymptomCategory collection will return this data even if it is null.
+- If PreserveNullAndEmptyArrays is true, the SymptomCategory collection does not return this data.
+
+## Nested Query 
+
+```csharp
+QueryExecuter queryExecuter = new();
+JsonNode? response = await queryExecuter.ExecuteQueryAsync(filters: null,
+    lookups: new List<Lookup>()
+    {
+        new Lookup()
+        {
+            From="ModelGroup",
+            As="ModelGroup",
+            ForeignKey="_id",
+            LocalField="ModelGroupId",
+            RelationType=Enums.RelationTypes.One,
+            Selects= new List<string>{"Name","IsDeleted"},
+        },
+        new Lookup()
+        {
+            From="DeviceType",
+            As="DeviceType",
+            ForeignKey="_id",
+            LocalField="ModelGroup.DeviceTypeId",
+            RelationType = Enums.RelationTypes.One,
+            Selects= new List<string>{"Name","IsDeleted"},
+        }
+    },
+    selectedFields: new List<string> { "_id", "Name" }, getAllCollections);
+```
+- For nested lookups, **LocalField** is given the address of the lookup. For example, the DeviceType collection above.
+
