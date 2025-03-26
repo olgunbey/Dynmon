@@ -315,14 +315,17 @@ namespace Dynmon
 
         private IEnumerable<BsonDocument> BuildUnwindStages(IEnumerable<Lookup> lookups)
         {
-            var oneToManyLookups = lookups.Where(y => y.RelationType == RelationTypes.One);
-            return oneToManyLookups.Select(y =>
-                new BsonDocument("$unwind", new BsonDocument
-                {
-                { "path", "$" + (string.IsNullOrEmpty(y.RootPath) ? y.From : $"{y.RootPath}.{y.From}") },
-                { "preserveNullAndEmptyArrays", y.PreserveNullAndEmptyArrays }
-                })
-            );
+            var groupBylookups = lookups.GroupBy(y => y.RelationType);
+
+            return groupBylookups.SelectMany(group =>
+             group.Select(lookup =>
+             new BsonDocument("$unwind", new BsonDocument
+             {
+                { "path", "$" + (string.IsNullOrEmpty(lookup.RootPath) ? lookup.From : $"{lookup.RootPath}.{lookup.From}") },
+                { "preserveNullAndEmptyArrays", lookup.PreserveNullAndEmptyArrays }
+             }))
+             );
+
         }
 
         private BsonDocument BuildFilterCriteria(IEnumerable<Filter> filters)
