@@ -3,10 +3,11 @@
 **Dynmon** is a package for managing dynamic Mongo processes in C#.
 
 
-## Parameters
-
 # Packages
 [![Dynmon on NuGet](https://img.shields.io/nuget/v/Dynmon?label=Dynmon)](https://www.nuget.org/packages/Dynmon)
+
+## Parameters
+
 
 ### Filters
 Defines the valid filters for the query. Each filter specifies a particular condition on a particular field.
