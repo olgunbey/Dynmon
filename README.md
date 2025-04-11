@@ -1,6 +1,6 @@
 <h1 align="left">Dynmon</h1>
 
-**Dynmon** is a package for managing dynamic Mongo processes in C#.
+**Dynmon** is a package for managing dynamic lookup processes in Mongo.
 
 
 # Packages
