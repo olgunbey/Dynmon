@@ -9,22 +9,94 @@ namespace Dynmon
 {
     public class QueryExecuter
     {
-        public async Task<JsonNode?> ExecuteQueryAsync(IEnumerable<Filter>? filters, List<Lookup>? lookups, List<string> selectedFields, IMongoCollection<BsonDocument> data)
+        public async Task<JsonNode?> ExecuteQueryAsync(MongoQueryRequest mongoQueryRequest, IMongoCollection<BsonDocument> data)
         {
             List<BsonDocument> lookupPipeline;
-            if (lookups == null)
+            if (mongoQueryRequest.Lookups == null)
             {
-                lookupPipeline = await HandleFiltersAndProjection(filters, selectedFields, data);
+                lookupPipeline = await HandleFiltersAndProjection(mongoQueryRequest.Filters, mongoQueryRequest.SelectedFields, data);
             }
             else
             {
-                lookupPipeline = await HandleLookupsAndProjection(filters, lookups, selectedFields, data);
+                lookupPipeline = await HandleLookupsAndProjection(mongoQueryRequest.Filters, mongoQueryRequest.Lookups, mongoQueryRequest.SelectedFields, data);
             }
 
-            AddUnwindsIfNecessary(lookups, lookupPipeline);
+            AddUnwindsIfNecessary(mongoQueryRequest.Lookups, lookupPipeline);
 
             var jsonData = await data.Aggregate<BsonDocument>(lookupPipeline).ToListAsync();
             return JsonNode.Parse(jsonData.ToJson());
+        }
+        public async Task<JsonNode?> ExecuteQueryAsync(MongoQueryRequest mongoQueryRequest, string connectionString, string cluster, string collection)
+        {
+            MongoClient mongoClient = new MongoClient(connectionString);
+            IMongoCollection<BsonDocument> getCollection = mongoClient.GetDatabase(cluster).GetCollection<BsonDocument>(collection);
+
+            List<BsonDocument> lookupPipeline;
+            if (mongoQueryRequest.Lookups == null)
+            {
+                lookupPipeline = await HandleFiltersAndProjection(mongoQueryRequest.Filters, mongoQueryRequest.SelectedFields, getCollection);
+            }
+            else
+            {
+                lookupPipeline = await HandleLookupsAndProjection(mongoQueryRequest.Filters, mongoQueryRequest.Lookups, mongoQueryRequest.SelectedFields, getCollection);
+            }
+            AddUnwindsIfNecessary(mongoQueryRequest.Lookups, lookupPipeline);
+
+            var jsonData = await getCollection.Aggregate<BsonDocument>(lookupPipeline).ToListAsync();
+            return JsonNode.Parse(jsonData.ToJson());
+
+        }
+        public async Task<bool> InsertAsync(Insert insert)
+        {
+            BsonDocument filter = new();
+            if (insert.Filter is { })
+            {
+                filter = BuildFilterCriteria(insert.Filter);
+            }
+
+            BsonDocument bsonDocument = new();
+            JsonNode? insertJsonData = JsonNode.Parse(insert.JsonData);
+
+
+            var existsUser = insert.Data.Find(filter).FirstOrDefault();
+
+            if (insertJsonData is JsonArray && insert.InsertProperty is not null)
+            {
+                var jsonArray = JsonArray.Parse(insert.JsonData);
+
+                BsonArray bsonArray = new();
+                foreach (var item in jsonArray.AsArray())
+                {
+                    // JSON öğesini BSON öğesine dönüştür
+                    bsonArray.Add(BsonDocument.Parse(JsonSerializer.Serialize(item)));
+                }
+
+                // Bu öğeleri tek tek array'e eklemek için $push kullanılır
+                BsonDocument update = new();
+                update.Add("$push", new BsonDocument(insert.InsertProperty, new BsonDocument
+                {
+                    { "$each", bsonArray }
+                }));
+
+                // Filtre ile eşleşen belgeyi güncelle
+                var result = await insert.Data.UpdateOneAsync(filter, update);
+
+                return result.ModifiedCount > 0;
+            }
+            else
+            {
+                bsonDocument = BsonDocument.Parse(insert.JsonData);
+            }
+
+            try
+            {
+                await insert.Data.InsertOneAsync(bsonDocument);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private async Task<List<BsonDocument>> HandleFiltersAndProjection(IEnumerable<Filter>? filters, List<string> selectedFields, IMongoCollection<BsonDocument> data)
