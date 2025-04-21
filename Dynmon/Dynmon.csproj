@@ -5,14 +5,12 @@
 	  <ImplicitUsings>enable</ImplicitUsings>
 	  <Nullable>enable</Nullable>
 	  <PackageId>Dynmon</PackageId>
-	  <Version>1.0.4</Version>
+	  <Version>1.0.5</Version>
 	  <Authors>Olgunbey Şahin</Authors>
 	  <Description>Dynamic preparation of MongoDb queries in C#.</Description>
 	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
 	  <RepositoryUrl>https://github.com/olgunbey/Dynmon</RepositoryUrl>
 	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-	  <AssemblyVersion>1.0.4</AssemblyVersion>
-	  <FileVersion>1.0.4</FileVersion>
 
 
   </PropertyGroup>
